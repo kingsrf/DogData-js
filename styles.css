@@ -1,0 +1,35 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background: #f7f7f7;
+}
+
+h1, h2, h3 {
+  color: #444;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+li {
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+li:hover {
+  text-decoration: underline;
+  color: #007BFF;
+}
+
+#breed-details {
+  margin-top: 20px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #494848;
+}
+
+section {
+  margin-bottom: 40px;
+}
