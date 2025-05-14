@@ -13,6 +13,14 @@
   <section>
     <h2>Dog Breeds</h2>
     <ul id="breed-list"></ul>
+
+    <div id="pagination">
+        <button id="prev-page" disabled>< Prev</button>
+        <span>
+            Page <span id="current-page">1</span>
+            of <span id="total-pages">?</span></span>
+        <button id="next-page" disabled>Next ></button>
+    </div>
   </section>
 
   <section id="breed-details">
@@ -24,11 +32,6 @@
     <ul id="dog-facts"></ul>
   </section>
 
-  <section>
-    <h3>Dog Groups</h3>
-    <ul id="dog-groups"></ul>
-  </section>
-
-  <script src="main.js" type="module"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>

@@ -1,9 +1,7 @@
-
 import {
   fetchAndDisplayBreeds,
   fetchBreedDetails,
-  fetchDogFacts,
-  fetchDogGroups
+  fetchDogFacts
 } from '../main.js';
 
 beforeEach(() => {
@@ -12,15 +10,16 @@ beforeEach(() => {
     <ul id="breed-list"></ul>
     <section id="breed-details"></section>
     <ul id="dog-facts"></ul>
-    <ul id="dog-groups"></ul>
   `;
   fetch.resetMocks();
 });
 
-describe('Normal cases', () => {
-  test('fetchAndDisplayBreeds renders list items', async () => {
+describe('fetchAndDisplayBreeds', () => {
+  test('renders list items', async () => {
+    // Mock breed list with pagination metadata
     fetch.mockResponseOnce(JSON.stringify({
-      data: [ { id: '1', attributes: { name: 'Foo' } } ]
+      data: [ { id: '1', attributes: { name: 'Foo' } } ],
+      meta: { pagination: { current: 1, last: 1 } }
     }));
 
     await fetchAndDisplayBreeds();
@@ -29,9 +28,20 @@ describe('Normal cases', () => {
     expect(items[0].textContent).toBe('Foo');
   });
 
-  test('fetchBreedDetails shows breed info', async () => {
+  test('handles HTTP error', async () => {
+    fetch.mockResponseOnce('', { status: 500 });
+
+    await fetchAndDisplayBreeds();
+    expect(document.querySelector('#breed-list').textContent)
+      .toMatch(/Error loading breeds/);
+  });
+});
+
+describe('fetchBreedDetails', () => {
+  test('shows breed info and group', async () => {
     const mockBreed = {
       data: {
+        id: '1',
         attributes: {
           name: 'Bar',
           description: '',
@@ -39,18 +49,44 @@ describe('Normal cases', () => {
           male_weight: { min: 3, max: 4 },
           female_weight: { min: 5, max: 6 },
           hypoallergenic: false
+        },
+        relationships: {
+          group: { data: { id: 'g1', type: 'group' } }
         }
       }
     };
-    fetch.mockResponseOnce(JSON.stringify(mockBreed));
+    const mockGroup = {
+      data: {
+        id: 'g1',
+        type: 'group',
+        attributes: { name: 'Herding' }
+      }
+    };
+
+    // First fetch (breed) then second (group)
+    fetch.mockResponses(
+      [ JSON.stringify(mockBreed), { status: 200 } ],
+      [ JSON.stringify(mockGroup), { status: 200 } ]
+    );
 
     await fetchBreedDetails('1');
-    const details = document.getElementById('breed-details').innerHTML;
-    expect(details).toContain('<h2>Bar</h2>');
-    expect(details).toContain('1 - 2 years');
+    const html = document.getElementById('breed-details').innerHTML;
+    expect(html).toContain('<h2>Bar</h2>');
+    expect(html).toContain('1 - 2 years');
+    expect(html).toContain('<strong>Group:</strong> Herding');
   });
 
-  test('fetchDogFacts appends facts', async () => {
+  test('handles missing breed', async () => {
+    fetch.mockResponseOnce('', { status: 404 });
+
+    await fetchBreedDetails('x');
+    expect(document.getElementById('breed-details').textContent)
+      .toMatch(/Error:/);
+  });
+});
+
+describe('fetchDogFacts', () => {
+  test('appends facts', async () => {
     fetch.mockResponseOnce(JSON.stringify({
       data: [ { attributes: { body: 'Fact1' } } ]
     }));
@@ -59,31 +95,5 @@ describe('Normal cases', () => {
     const factItems = document.querySelectorAll('#dog-facts li');
     expect(factItems).toHaveLength(1);
     expect(factItems[0].textContent).toBe('Fact1');
-  });
-});
-
-describe('Edge cases', () => {
-  test('fetchAndDisplayBreeds handles HTTP error', async () => {
-    fetch.mockResponseOnce('', { status: 500 });
-
-    await fetchAndDisplayBreeds();
-    expect(document.querySelector('#breed-list').textContent)
-      .toMatch(/Error loading breeds/);
-  });
-
-  test('fetchBreedDetails handles missing breed', async () => {
-    fetch.mockResponseOnce('', { status: 404 });
-
-    await fetchBreedDetails('x');
-    expect(document.getElementById('breed-details').textContent)
-      .toMatch(/Error:/);
-  });
-
-  test('fetchDogGroups handles network failure', async () => {
-    fetch.mockRejectOnce(new Error('network fail'));
-
-    await fetchDogGroups();
-    expect(document.querySelector('#dog-groups').textContent)
-      .toMatch(/Error fetching groups/);
   });
 });
